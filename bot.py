@@ -9,7 +9,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN = os.getenv('DISCORD_TOKEN') # Sets up the bot with a private token that I can't publish
 bot = commands.Bot(command_prefix='!')
 
 @bot.command(name='rank')
