@@ -6,13 +6,12 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 from discord.ext import commands
-from dotenv import load_dotenv
 
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN') # Sets up the bot with a private token that I can't publish
+with open("token.txt") as fin:
+    TOKEN = fin.read()
 bot = commands.Bot(command_prefix='!')
 
-@bot.command(name='rank')
+@bot.command(name='eventrank')
 async def time(ctx, title, position):
     rank = int(position)
     if rank < 1 or rank > 100:
@@ -34,7 +33,7 @@ async def time(ctx, title, position):
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
-            else:
+            else:                
                 flow = InstalledAppFlow.from_client_secrets_file(
                     'credentials.json', SCOPES)
                 creds = flow.run_local_server(port=0)
@@ -54,9 +53,26 @@ async def time(ctx, title, position):
             if values[0][i] == '':
                 blankColumn = i
                 break
-        rankColumn = 1
         timeColumn = blankColumn-1
-        print(timeColumn)
+        prev = values[0][1]
+        prevRow = 0
+        didSomething = False
+        for i in range(100):
+            if values[i][1] != '' and not "?" in values[i][1]:
+                if int(values[i][1]) == rank:
+                    didSomething = True
+                    await ctx.send("Rank " + str(rank) + " in " + sheetName + " is " + values[i][timeColumn] + " seconds.")
+                elif int(values[i][1]) > rank:
+                    didSomething = True
+                    await ctx.send(f"Rank {rank} in {sheetName} is not exactly known, but we do know that Rank {prevRow+1} is {values[prevRow][timeColumn]} seconds and Rank {i+1} is {values[i][timeColumn]} seconds.")
+        
+        # if values[rank-1][1] != '' and not "?" in values[rank-1][1]:
+        #     if position in values[rank-1][1]:
+        #         await ctx.send("Rank " + str(rank) + " in " + sheetName + " is " + values[rank-1][timeColumn] + " seconds.")
+        #     else:
+
+        
+        
     except:
         await ctx.send("Some error occurred (most likely typoed or autocorrected title). Please use this command in the form !rank (title) (position).")
 bot.run(TOKEN)
