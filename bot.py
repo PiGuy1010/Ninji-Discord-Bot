@@ -89,7 +89,7 @@ async def time(ctx, title, position):
         await ctx.send("Some error occurred (most likely typoed or autocorrected title). Please use this command in the form !rank (title) (position).")
 @bot.command(name='rank')
 async def knowntime(ctx,title,position):
-    rank = int(position)-1
+    rank = int(position) - 1
     print(rank)
     if rank < 0:
         await ctx.send("You entered a non-positive rank, which is not allowed")
@@ -105,8 +105,7 @@ async def knowntime(ctx,title,position):
         timeColumn = 5
         playerColumn = 3
         if rank < len(values):
-            await ctx.send(f"Rank {rank+1} in {sheetName} is {values[rank][timeColumn]} by {values[rank-1
-            ][playerColumn]}")
+            await ctx.send(f"Rank {rank+1} in {sheetName} is {values[rank][timeColumn]} by {values[rank-1][playerColumn]}")
         else:
             await ctx.send("There aren't that many known times")
     except:
