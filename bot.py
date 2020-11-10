@@ -104,7 +104,7 @@ async def knowntime(ctx,title,position):
         values = result.get('values', [])
         timeColumn = 5
         playerColumn = 4
-        if values[rank] != [] and values[rank][timeColumn] != "":
+        if rank <= len(values)
             await ctx.send(f"Rank {rank} in {sheetName} is {values[rank][timeColumn]} by {values[rank][playerColumn]}")
         else
             await ctx.send("There aren't that many known times")
