@@ -39,6 +39,7 @@ service = build('sheets', 'v4', credentials=creds)
 @bot.command(name='eventrank')
 async def time(ctx, title, position):
     rank = int(position)
+    print(rank)
     if rank < 1 or rank > 100:
         await ctx.send("You entered either a non-positive rank or a rank above 100, which are not allowed.")
         raise Exception("You entered either a non-positive rank or a rank above 100, which are not allowed.")
@@ -48,7 +49,8 @@ async def time(ctx, title, position):
         sheet = service.spreadsheets()
         #######################################################################
         sheetName = title + " (event)"
-        result = sheet.values().get(spreadsheetId = '1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4', range=sheetName).execute()
+        print("\'"+sheetName+"\'"+"!A1:H101")
+        result = sheet.values().get(spreadsheetId = '1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4', range="\'"+sheetName+"\'"+"!A1:N101").execute()
         values = result.get('values', [])
         for i in range(3, len(values[0])):
             if values[0][i] == '':
@@ -59,21 +61,23 @@ async def time(ctx, title, position):
         prevRow = 0
         didSomething = False
         for i in range(100):
-            if values[i][1] != '' and not "?" in values[i][1]:
+            if values[i] != [] and values[i][1] != '' and not "?" in values[i][1]:
                 if int(values[i][1]) == rank:
+                    print("Found exact rank")
                     didSomething = True
-                    await ctx.send("Rank " + str(rank) + " in " + sheetName + " is " + values[i][timeColumn] + " seconds.")
+                    await ctx.send(f"Rank {str(rank)} in {sheetName} is {values[i][timeColumn]} seconds.")
+                    break
                 elif int(values[i][1]) > rank:
+                    print("Found greater rank")
                     didSomething = True
-                    await ctx.send(f"Rank {rank} in {sheetName} is not exactly known, but we do know that Rank {prevRow+1} is {values[prevRow][timeColumn]} seconds and Rank {i+1} is {values[i][timeColumn]} seconds.")
-        
-        # if values[rank-1][1] != '' and not "?" in values[rank-1][1]:
-        #     if position in values[rank-1][1]:
-        #         await ctx.send("Rank " + str(rank) + " in " + sheetName + " is " + values[rank-1][timeColumn] + " seconds.")
-        #     else:
-
-        
-        
+                    await ctx.send(f"Rank {rank} in {sheetName} is not exactly known, but we do know that Rank {prev} is {values[prevRow][timeColumn]} seconds and Rank {i+1} is {values[i][timeColumn]} seconds.")
+                    break
+                else:
+                    prev = values[i][1]
+                    prevRow = i
+        print("Got to line 73")
+        if not didSomething:
+            await ctx.send(f"Rank {rank} in {sheetName} is not exactly known, but we do know that Rank {prev} is {values[prevRow][timeColumn]} seconds.")
     except:
         await ctx.send("Some error occurred (most likely typoed or autocorrected title). Please use this command in the form !rank (title) (position).")
 bot.run(TOKEN)
