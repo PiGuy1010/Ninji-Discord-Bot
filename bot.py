@@ -103,10 +103,11 @@ async def knowntime(ctx,title,position):
         result = sheet.values().get(spreadsheetId = '1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4', range=sheetName).execute()
         values = result.get('values', [])
         timeColumn = 5
+        playerColumn = 4
         if values[rank] != [] and values[rank][timeColumn] != "":
-            await ctx.send(f"Rank {rank} in {sheetName} is {values[rank][timeColumn]}")
+            await ctx.send(f"Rank {rank} in {sheetName} is {values[rank][timeColumn]} by {values[rank][playerColumn]}")
         else
-            await ctx.send(f"There aren't that many known times")
+            await ctx.send("There aren't that many known times")
     except:
         await ctx.send("some error occured (most likely typoed or autocorrected title). Please use this command in the form !rank (title) (position)")
 bot.run(TOKEN)
