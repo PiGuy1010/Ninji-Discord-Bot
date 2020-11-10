@@ -89,9 +89,9 @@ async def time(ctx, title, position):
         await ctx.send("Some error occurred (most likely typoed or autocorrected title). Please use this command in the form !rank (title) (position).")
 @bot.command(name='rank')
 async def knowntime(ctx,title,position):
-    rank = int(position)
+    rank = int(position) - 1
     print(rank)
-    if rank < 1:
+    if rank < 0:
         await ctx.send("You entered a non-positive rank, which is not allowed")
         raise Exception("You entered a non-positive rank, which is not allowed")
     try:
