@@ -99,7 +99,7 @@ async def knowntime(ctx,title,position):
         result = sheet.values().get(spreadsheetId = '1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4', range=sheetName).execute()
         values = result.get('values', [])
         timeColumn = 5
-        playerColumn = 4
+        playerColumn = 3
         if rank < len(values):
             await ctx.send(f"Rank {rank+1} in {sheetName} is {values[rank][timeColumn]} by {values[rank-1][playerColumn]}")
         else:
