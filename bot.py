@@ -39,7 +39,6 @@ service = build('sheets', 'v4', credentials=creds)
 @bot.command(name='eventrank')
 async def time(ctx, title, position):
     rank = int(position)
-    print(rank)
     if rank < 1 or rank > 100:
         await ctx.send("You entered either a non-positive rank or a rank above 100, which are not allowed.")
         raise Exception("You entered either a non-positive rank or a rank above 100, which are not allowed.")
@@ -70,27 +69,24 @@ async def time(ctx, title, position):
             for i in range(firstRow, 100):
                 if values[i] != [] and values[i][1] != '' and not "?" in values[i][1]:
                     if int(values[i][1]) == rank:
-                        print("Found exact rank")
                         didSomething = True
                         await ctx.send(f"Rank {rank} in {sheetName} is {values[i][timeColumn]} seconds.")
                         break
                     elif int(values[i][1]) > rank:
-                        print("Found greater rank")
                         didSomething = True
                         await ctx.send(f"Rank {rank} in {sheetName} is not exactly known, but we do know that Rank {prev} is {values[prevRow][timeColumn]} seconds and Rank {i+1} is {values[i][timeColumn]} seconds.")
                         break
                     else:
                         prev = values[i][1]
                         prevRow = i
-            print("Got to line 73")
             if not didSomething:
                 await ctx.send(f"Rank {rank} in {sheetName} is not exactly known, but we do know that Rank {prev} is {values[prevRow][timeColumn]} seconds.")
     except:
         await ctx.send("Some error occurred (most likely typoed or autocorrected title). Please use this command in the form !rank (title) (position).")
+
 @bot.command(name='rank')
 async def knowntime(ctx,title,position):
     rank = int(position) - 1
-    print(rank)
     if rank < 0:
         await ctx.send("You entered a non-positive rank, which is not allowed")
         raise Exception("You entered a non-positive rank, which is not allowed")
@@ -103,11 +99,71 @@ async def knowntime(ctx,title,position):
         result = sheet.values().get(spreadsheetId = '1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4', range=sheetName).execute()
         values = result.get('values', [])
         timeColumn = 5
-        playerColumn = 3
+        playerColumn = 4
         if rank < len(values):
             await ctx.send(f"Rank {rank+1} in {sheetName} is {values[rank][timeColumn]} by {values[rank-1][playerColumn]}")
         else:
             await ctx.send("There aren't that many known times")
     except:
-        await ctx.send("some error occured (most likely typoed or autocorrected title). Please use this command in the form !rank (title) (position)")
+        await ctx.send("Some error occured (most likely typoed or autocorrected title). Please use this command in the form !rank (title) (position).")
+
+@bot.command(name='time')
+async def rank(ctx, title, time):
+    searchTime = round(float(time), 3)
+    try:
+        # Call the Sheets API
+        sheet = service.spreadsheets()
+
+        sheetName = title + " (event)"
+        result = sheet.values().get(spreadsheetId = '1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4', range=sheetName).execute()
+        values = result.get('values', [])
+        for i in range(3, len(values[0])):
+            if values[0][i] == '':
+                blankColumn = i
+                break
+        timeColumn = blankColumn-1
+        prev = values[firstRow][timeColumn]
+        prevRow = firstRow
+        didSomething = False
+        for i in range(firstRow, 100):
+            if values[i] != [] and values[i][1] != '' and not "?" in values[i][1]:
+                if int(values[i][1]) == rank:
+                    didSomething = True
+                    await ctx.send(f"Rank {rank} in {sheetName} is {values[i][timeColumn]} seconds.")
+                    break
+                elif int(values[i][1]) > rank:
+                    didSomething = True
+                    await ctx.send(f"Rank {rank} in {sheetName} is not exactly known, but we do know that Rank {prev} is {values[prevRow][timeColumn]} seconds and Rank {i+1} is {values[i][timeColumn]} seconds.")
+                    break
+                else:
+                    prev = values[i][1]
+                    prevRow = i
+        if not didSomething:
+            await ctx.send(f"Rank {rank} in {sheetName} is not exactly known, but we do know that Rank {prev} is {values[prevRow][timeColumn]} seconds.")
+    except:
+        await ctx.send("Some error occurred (most likely typoed or autocorrected title). Please use this command in the form !time (title) (time).")
+
+@bot.command(name='player')
+async def player(ctx, title, player):
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId = '1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4', range="PRT!C:C").execute()
+    values = result.get('values', [])
+    row = 0
+    for i in range(len(values)):
+        if values[i][0].lower() == player.lower():
+            print(i)
+            row = i
+            break
+
+    ranges = ["PRT!1:1", f"PRT!{row+1}:{row+1}"]
+    newResult = sheet.values().batchGet(spreadsheetId = '1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4', ranges=ranges).execute()
+    newValues = [newResult.get('valueRanges', [])[0].get('values', [])[0], newResult.get('valueRanges', [])[1].get('values', [])[0]]
+    titleLength = len(title)
+    for i in range(len(newValues[0])):
+        if newValues[0][i][:titleLength].lower() == title.lower():
+            print(i)
+            print(newValues[1][i])
+            print(newValues[1][i+2])
+            await ctx.send(f"{player} in {title} got an event time of {newValues[1][i+1]}, which was event rank {newValues[1][i+3]}. {player} in {title} also has an overall PB of {newValues[1][i]}, which is rank {newValues[1][i+2]} of known times.")
+            break
 bot.run(TOKEN)
