@@ -56,10 +56,10 @@ async def time(ctx, title, position):
         timeColumn = blankColumn-1
         firstRow = 0
         while (values[firstRow] == [] or values[firstRow][1] == ''):
-            firstRow += 1
             if firstRow >= 100:
                 raise Exception("Empty")
                 break
+            firstRow += 1
         if rank < firstRow+1:
             await ctx.send(f"Rank {rank} in {sheetName} is not exactly known, but we do know that Rank {firstRow+1} is {values[firstRow][timeColumn]} seconds.")
         else:
@@ -110,38 +110,44 @@ async def knowntime(ctx,title,position):
 @bot.command(name='time')
 async def rank(ctx, title, time):
     searchTime = round(float(time), 3)
-    try:
-        # Call the Sheets API
-        sheet = service.spreadsheets()
+    # try:
+    # Call the Sheets API
+    sheet = service.spreadsheets()
 
-        sheetName = title + " (event)"
-        result = sheet.values().get(spreadsheetId = '1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4', range=sheetName).execute()
-        values = result.get('values', [])
-        for i in range(3, len(values[0])):
-            if values[0][i] == '':
-                blankColumn = i
-                break
-        timeColumn = blankColumn-1
+    sheetName = title + " (event)"
+    result = sheet.values().get(spreadsheetId = '1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4', range=sheetName).execute()
+    values = result.get('values', [])
+    for i in range(3, len(values[0])):
+        if values[0][i] == '':
+            blankColumn = i
+            break
+    timeColumn = blankColumn-1
+    firstRow = 0
+    while (values[firstRow] == [] or values[firstRow][1] == ''):
+        if firstRow >= 100:
+            raise Exception("Empty")
+            break
+        firstRow += 1
+    if searchTime < round(float(values[firstRow][timeColumn]), 3):
+        await ctx.send(f"A time of {searchTime:.3f} in {sheetName} would be the best event time known.")
+    else:
         prev = values[firstRow][timeColumn]
         prevRow = firstRow
-        didSomething = False
         for i in range(firstRow, 100):
             if values[i] != [] and values[i][1] != '' and not "?" in values[i][1]:
-                if int(values[i][1]) == rank:
-                    didSomething = True
-                    await ctx.send(f"Rank {rank} in {sheetName} is {values[i][timeColumn]} seconds.")
+                if round(float(values[i][timeColumn]), 3) == searchTime:
+                    await ctx.send(f"A time of {searchTime:.3f} would be tied for Rank {values[i][1]} in {sheetName}.")
                     break
-                elif int(values[i][1]) > rank:
-                    didSomething = True
-                    await ctx.send(f"Rank {rank} in {sheetName} is not exactly known, but we do know that Rank {prev} is {values[prevRow][timeColumn]} seconds and Rank {i+1} is {values[i][timeColumn]} seconds.")
+                elif round(float(values[i][timeColumn]), 3) > searchTime:
+                    await ctx.send(f"Nobody has reported a time of exactly {searchTime:.3f} in {sheetName}, but we do know that Rank {prev} is {values[prevRow][timeColumn]} seconds and Rank {i+1} is {values[i][timeColumn]} seconds.")
                     break
                 else:
                     prev = values[i][1]
                     prevRow = i
-        if not didSomething:
-            await ctx.send(f"Rank {rank} in {sheetName} is not exactly known, but we do know that Rank {prev} is {values[prevRow][timeColumn]} seconds.")
-    except:
-        await ctx.send("Some error occurred (most likely typoed or autocorrected title). Please use this command in the form !time (title) (time).")
+        else: # Apparently this thing called a for else loop exists which is kinda cool
+            await ctx.send(f"A time of {searchTime:.3f} is slower than any event time that has been reported to the spreadsheet.")
+    # except:
+    #     await ctx.send("Some error occurred (most likely typoed or autocorrected title). Please use this command in the form !time (title) (time).")
 
 @bot.command(name='player')
 async def player(ctx, title, player):
@@ -166,31 +172,32 @@ async def player(ctx, title, player):
             print(newValues[1][i+2])
             await ctx.send(f"{player} in {title} got an event time of {newValues[1][i+1]}, which was event rank {newValues[1][i+3]}. {player} in {title} also has an overall PB of {newValues[1][i]}, which is rank {newValues[1][i+2]} of known times.")
             break
-@bot.command(name='fastestvid')
-async def findfastvid(ctx,title):
-    try:
-        # Call the Sheets API
-        sheet = service.spreadsheets()
-        #######################################################################
-        sheetName = title
-        result = sheet.values().get(spreadsheetId='1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4',
-                                    range=sheetName).execute()
-        values = result.get('values', [])
-        resultLink = sheet.values().get(spreadsheetId='1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4',
-                                    range=sheetName,fields="sheets/data/rowData/values/hyperlink").execute()
-        valuesLink = resultLink.get('values', [])
 
-        for i in range(len(values[0])):
-            if values[1][i] == "Fastest Time with Video" or values[1][i] == "Fastest Full Run with Video":
-                timeColumn = i
-        for i in range(timeColumn):
-            if valuesLink[2][timeColumn-i] == "":
-                timeColumn -= 1
-            else:
-                break
+# @bot.command(name='fastestvid')
+# async def findfastvid(ctx,title):
+#     try:
+#         # Call the Sheets API
+#         sheet = service.spreadsheets()
+#         #######################################################################
+#         sheetName = title
+#         result = sheet.values().get(spreadsheetId='1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4',
+#                                     range=sheetName).execute()
+#         values = result.get('values', [])
+#         resultLink = sheet.values().get(spreadsheetId='1xOMJcEq_fVPQ4VXHfuStVNWAC4tw6d5w6i7VDEcPgn4',
+#                                     range=sheetName,fields="sheets/data/rowData/values/hyperlink").execute()
+#         valuesLink = resultLink.get('values', [])
 
-        await ctx.send(f"fastest video is {values[2][timeColumn]}")
-    except:
-        await ctx.send("some error occured (most likely typoed or autocorrected title). Please use this command in the form !fastestvid (title)")
+#         for i in range(len(values[0])):
+#             if values[1][i] == "Fastest Time with Video" or values[1][i] == "Fastest Full Run with Video":
+#                 timeColumn = i
+#         for i in range(timeColumn):
+#             if valuesLink[2][timeColumn-i] == "":
+#                 timeColumn -= 1
+#             else:
+#                 break
+
+#         await ctx.send(f"fastest video is {values[2][timeColumn]}")
+#     except:
+#         await ctx.send("some error occured (most likely typoed or autocorrected title). Please use this command in the form !fastestvid (title)")
 
 bot.run(TOKEN)
